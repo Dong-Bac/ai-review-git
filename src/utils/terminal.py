@@ -1,0 +1,40 @@
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.text import Text
+from rich import print as rprint
+
+console = Console()
+error_console = Console(stderr=True)
+
+
+def info(message: str) -> None:
+    console.print(f"[cyan]ℹ️  {message}[/cyan]")
+
+def success(message: str) -> None:
+    console.print(f"[green]✅ {message}[/green]")
+
+
+def warn(message: str) -> None:
+    console.print(f"[yellow]⚠️  {message}[/yellow]")
+
+
+def error(message: str, detail: str = "") -> None:
+    error_console.print(f"[red]❌ {message}[/red]")
+    if detail:
+        error_console.print(f"[dim]{detail}[/dim]")
+
+
+def print_review(content: str, model: str) -> None:
+    """Render the AI review as beautifully formatted Markdown inside a panel."""
+    console.print()
+    console.print(
+        Panel(
+            Markdown(content),
+            title=f"[bold blue]🤖 AI Code Review[/bold blue]",
+            subtitle=f"[dim]Model: {model}[/dim]",
+            border_style="blue",
+            padding=(1, 2),
+        )
+    )
+    console.print()
