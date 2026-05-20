@@ -19,8 +19,16 @@ async def read_files_concurrently(file_paths: list[str], root: Path):
         content = await read_file_safe(root / rel_path)
         return rel_path, content
     
-    results = await asyncio.gather(*[_read(p) for p in file_paths])
-    return {path: content for path, content in results if content is not None}
+    results = await asyncio.gather(*[_read(p) for p in file_paths], return_exceptions= True)
+
+    # filter
+    valid_result = []
+    for r in results:
+        if isinstance(r, BaseException):
+            continue
+        valid_result.append(r)
+
+    return {path: content for path, content in valid_result if content is not None}
 
 def truncate_content(content: str, max_chars: int = 8_000) -> str:
     if len(content) <= max_chars:

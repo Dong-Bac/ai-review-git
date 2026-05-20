@@ -9,17 +9,24 @@ from pathlib import Path
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from src.cache import ReviewCache
 from src.config import load_config
 from src.git import is_git_repository, get_git_diff_info
 from src.ai import create_ai_provider, build_prompt
 from src.rules import load_rules
 from src.utils.files import read_files_concurrently, resolve_project_name
 from src.utils.terminal import stream_review, success, warn, error, print_review
-from src.types import ReviewContext
+from src.types import ReviewContext, ReviewResult, ProjectInfo
 
 
-async def run_review() -> None:
+async def run_review(
+    no_cache: bool = False,
+    cache_ttl: int = 300,
+) -> None:
     root = Path.cwd()
+
+    # ── 0. Initialise cache ──────────────────────────────────
+    cache = ReviewCache(ttl_seconds=cache_ttl)
 
     # ── 1. Load config (fail fast) ───────────────────────────
     try:
@@ -93,34 +100,42 @@ async def run_review() -> None:
             changed_files=changed_files,
             branch=git_info.branch,
             rules=rules,
-            project_info=type("ProjectInfo", (), {  # lightweight inline object
-                "name": project_name,
-                "root_path": str(root.resolve()),
-            })(),
+            project_info=ProjectInfo(name=project_name, root_path=str(root.resolve())),
         )
         prompt = build_prompt(context)
 
-        # ── 7. Call AI ───────────────────────────────────────
+        # ── 7. Check cache (unless --no-cache) ───────────────
+        cache_key = ReviewCache.make_key(git_info.diff)
+        if not no_cache:
+            cached = cache.get(cache_key)
+            if cached is not None:
+                progress.stop()
+                success("Review loaded from cache.")
+                print_review(cached.content, cached.model)
+                return
+
+        # ── 8. Call AI ───────────────────────────────────────
         task = progress.add_task("🤖 Asking AI...", total=None)
         progress.stop()
         try:
-            # provider = create_ai_provider(config)
-            # result = await provider.ask(prompt)
-          provider = create_ai_provider(config)
-          collected_content = []
-          async for chunk in provider.stream(prompt=prompt):
-              collected_content.append(chunk.content)
-              stream_review(chunk.content, config.model, is_first= (len(collected_content) == 1))
-              if chunk.finish_reason:
-                  break
-          full_content = "".join(collected_content)
+            provider = create_ai_provider(config)
+            collected_content = []
+            async for chunk in provider.stream(prompt=prompt):
+                collected_content.append(chunk.content)
+                stream_review(chunk.content, config.model, is_first=(len(collected_content) == 1))
+                if chunk.finish_reason:
+                    break
+            full_content = "".join(collected_content)
         except RuntimeError as exc:
             error("AI request failed.", str(exc))
             raise SystemExit(1)
 
         progress.remove_task(task)
 
-    # tokens_info = f", ~{result.tokens_used} tokens" if result.tokens_used else ""
-    success(f"Review completed")
+    # ── 9. Store result in cache ─────────────────────────────
+    result = ReviewResult(content=full_content, model=config.model)
+    cache.set(cache_key, result)
 
-    # ── 8. Print result ──────────────────────────────────────
+    success("Review completed")
+
+    # ── 10. Print result ─────────────────────────────────────
