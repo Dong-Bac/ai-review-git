@@ -61,3 +61,9 @@ class AppConfig:
     app_name: str
     app_url: str
     max_tokens: int
+    provider: str = field(default="deepseek")
+
+@dataclass
+class StreamChunk:
+    content: str
+    finish_reason: Optional[str] = None

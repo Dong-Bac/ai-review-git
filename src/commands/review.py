@@ -14,7 +14,7 @@ from src.git import is_git_repository, get_git_diff_info
 from src.ai import create_ai_provider, build_prompt
 from src.rules import load_rules
 from src.utils.files import read_files_concurrently, resolve_project_name
-from src.utils.terminal import success, warn, error, print_review
+from src.utils.terminal import stream_review, success, warn, error, print_review
 from src.types import ReviewContext
 
 
@@ -102,18 +102,25 @@ async def run_review() -> None:
 
         # ── 7. Call AI ───────────────────────────────────────
         task = progress.add_task("🤖 Asking AI...", total=None)
+        progress.stop()
         try:
-            provider = create_ai_provider(config)
-            result = await provider.ask(prompt)
+            # provider = create_ai_provider(config)
+            # result = await provider.ask(prompt)
+          provider = create_ai_provider(config)
+          collected_content = []
+          async for chunk in provider.stream(prompt=prompt):
+              collected_content.append(chunk.content)
+              stream_review(chunk.content, config.model, is_first= (len(collected_content) == 1))
+              if chunk.finish_reason:
+                  break
+          full_content = "".join(collected_content)
         except RuntimeError as exc:
-            progress.stop()
             error("AI request failed.", str(exc))
             raise SystemExit(1)
 
         progress.remove_task(task)
 
-    tokens_info = f", ~{result.tokens_used} tokens" if result.tokens_used else ""
-    success(f"Review completed (model: {result.model}{tokens_info}).")
+    # tokens_info = f", ~{result.tokens_used} tokens" if result.tokens_used else ""
+    success(f"Review completed")
 
     # ── 8. Print result ──────────────────────────────────────
-    print_review(result.content, result.model)

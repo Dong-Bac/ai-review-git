@@ -38,3 +38,9 @@ def print_review(content: str, model: str) -> None:
         )
     )
     console.print()
+
+def stream_review(chunk: str, model: str, is_first: bool = False) -> None:
+    if is_first:
+        console.print()
+        
+    console.print(chunk, end="")

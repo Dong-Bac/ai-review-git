@@ -6,7 +6,7 @@
 
 - 🔍 Reads staged git diff automatically
 - 📄 Loads changed file contents for full context
-- 🤖 Sends context to AI via OpenRouter (DeepSeek, GPT-4, Claude, etc.)
+- 🤖 Sends context to AI via DeepSeek
 - 🎨 Beautiful terminal output powered by **Rich**
 - 📋 Custom project rules via `.roo/rules.md`
 - ⚡ Fully async — fast concurrent file reads
@@ -29,11 +29,10 @@ pip install -e .
 Create a `.env` file in the directory where you run `ai-review`:
 
 ```env
-OPENROUTER_API_KEY=sk-or-your-key-here
-OPENROUTER_MODEL=deepseek/deepseek-chat
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-chat
 ```
 
-Get a free key at [openrouter.ai](https://openrouter.ai).
 
 ## Usage
 
@@ -60,9 +59,9 @@ Create `.roo/rules.md` in your project root:
 
 | Variable | Default | Description |
 |---|---|---|
-| `OPENROUTER_API_KEY` | *(required)* | Your OpenRouter API key |
-| `OPENROUTER_MODEL` | `deepseek/deepseek-chat` | Model to use |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | API base URL |
+| `DEEPSEEK_API_KEY` | *(required)* | Your OpenRouter API key |
+| `DEEPSEEK_MODEL` | `deepseek/deepseek-chat` | Model to use |
+| `DEEPSEEK_BASE_URL` | `https://openrouter.ai/api/v1` | API base URL |
 | `AI_MAX_TOKENS` | `4096` | Max tokens in response |
 
 ## Architecture
@@ -76,7 +75,7 @@ src/
 │   └── review.py     # Review orchestrator
 ├── git/              # GitPython wrappers (async)
 ├── ai/
-│   ├── providers.py  # AIProvider ABC + OpenRouterProvider
+│   ├── providers.py  # AIProvider ABC + DEEPSEEK
 │   └── prompt_builder.py
 ├── rules/            # .roo/rules.md loader
 └── utils/
