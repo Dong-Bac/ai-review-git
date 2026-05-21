@@ -7,13 +7,13 @@ from src.types import ReviewResult
 
 @dataclass
 class CacheEntry:
-    result = ReviewResult
+    result : ReviewResult
     expires_at: float
 
 class ReviewCache:
     def __init__ (self, ttl_seconds: int = 300) -> None:
         self.ttl_seconds = ttl_seconds
-        self._store = dict[str, CacheEntry]
+        self._store : dict[str, CacheEntry] = {}
 
     @staticmethod
     def make_key(diff: str) -> str:

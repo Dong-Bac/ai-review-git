@@ -6,7 +6,7 @@ app = typer.Typer(
     name="ai-review",
     help="AI-powered code review for your git staged changes",
     add_completion=False,
-    pretty_exceptions_enable_locals=False,
+    pretty_exceptions_show_locals=False,
 )
 
 @app.command("review")
