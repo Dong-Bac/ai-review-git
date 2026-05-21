@@ -54,6 +54,13 @@ def _build_project_context(ctx: ReviewContext) -> str:
         f"- **Changed Files:** {len(ctx.changed_files)}"
     )
 
+def _build_commit_context(ctx: ReviewContext) -> str:
+    return(
+        f"## Commit Context\n\n"
+        f"- **Branch:** {ctx.branch}\n"
+        f"- **Purpose:** Review staged changes before commit\n"
+        f"- **Scope:** {len(ctx.changed_files)} file changed\n"
+    )
 
 def _build_changed_files_section(ctx: ReviewContext) -> str:
     if not ctx.changed_files:
@@ -87,6 +94,7 @@ def _build_file_contents_section(ctx: ReviewContext) -> str:
 def _build_user_prompt(ctx: ReviewContext) -> str:
     sections = [
         _build_project_context(ctx),
+        _build_commit_context(ctx),
         _build_changed_files_section(ctx),
         _build_diff_section(ctx.diff),
         _build_file_contents_section(ctx),

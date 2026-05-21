@@ -50,47 +50,33 @@ async def get_staged_diff(root: Path) -> str:
 
 
 async def get_staged_files(root: Path) -> list[ChangedFile]:
-    """Return list of staged changed files with their status."""
+    """Return list of staged changed files with their status.
+
+    Uses a single ``git diff --cached --name-status`` call which correctly
+    handles all scenarios:
+    - New files (added to index, not yet in HEAD)
+    - Modified files
+    - Deleted files
+    - Renamed files
+    - Empty repository (no commits yet)
+    """
     def _files() -> list[ChangedFile]:
         repo = Repo(root, search_parent_directories=True)
+        # Single authoritative call — works for both new & existing repos
+        output = repo.git.diff("--cached", "--name-status")
         files: list[ChangedFile] = []
-        seen: set[str] = set()
-
-        # Staged vs HEAD (or empty tree for new repos)
-        try:
-            head_commit = repo.head.commit
-            diffs = head_commit.diff("HEAD")
-        except Exception:
-            diffs = []
-
-        # Use git status for accuracy
-        for item in repo.index.diff("HEAD"):
-            if item.a_path not in seen:
-                seen.add(item.a_path)
-                files.append(ChangedFile(
-                    path=item.a_path,
-                    status=_status_to_enum(item.change_type),
-                ))
-
-        # New files staged but not yet in HEAD
-        for path in repo.untracked_files:
-            pass  # untracked are not staged
-
-        # Staged new files (added to index, not in HEAD)
-        try:
-            staged = repo.index.diff(repo.head.commit)
-        except Exception:
-            staged = repo.index.diff(None)
-
-        for item in staged:
-            fp = item.b_path or item.a_path
-            if fp and fp not in seen:
-                seen.add(fp)
-                files.append(ChangedFile(
-                    path=fp,
-                    status=_status_to_enum(item.change_type),
-                ))
-
+        for line in output.splitlines():
+            if not line.strip():
+                continue
+            # Format: <status>\t<path>  or  <status>\t<old_path>\t<new_path> (rename)
+            parts = line.split("\t")
+            status_char = parts[0][0]  # A, M, D, R, C, etc.
+            # For renames (Rxxx), the last part is the current path
+            path = parts[-1]
+            files.append(ChangedFile(
+                path=path,
+                status=_status_to_enum(status_char),
+            ))
         return files
 
     try:
@@ -101,7 +87,12 @@ async def get_staged_files(root: Path) -> list[ChangedFile]:
 
 
 async def _get_staged_files_porcelain(root: Path) -> list[ChangedFile]:
-    """Fallback: parse `git status --porcelain` output."""
+    """Fallback: parse ``git status --porcelain`` output.
+
+    Format: ``XY <path>`` where X = index status, Y = working tree status.
+    Uses ``split(maxsplit=1)`` instead of hardcoded indices to handle
+    filenames with spaces correctly.
+    """
     def _run() -> list[ChangedFile]:
         repo = Repo(root, search_parent_directories=True)
         output = repo.git.status("--porcelain")
@@ -110,7 +101,12 @@ async def _get_staged_files_porcelain(root: Path) -> list[ChangedFile]:
             if not line:
                 continue
             index_status = line[0]
-            filepath = line[3:].strip()
+            # Split on first space to get the path reliably
+            # (handles filenames with spaces)
+            parts = line.split(maxsplit=1)
+            if len(parts) < 2:
+                continue
+            filepath = parts[1].strip()
             if index_status != " " and index_status != "?":
                 files.append(ChangedFile(
                     path=filepath,

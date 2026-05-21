@@ -8,7 +8,7 @@ from src.ai.prompt_builder import build_prompt
 
 provider = {
     "deepseek": DeepSeekProvider,
-    "opennrouter": OpenRouterProvider,
+    "openrouter": OpenRouterProvider,
 }
 def create_ai_provider(config: AppConfig) -> AIProvider:
     

@@ -86,6 +86,14 @@ class DeepSeekProvider(AIProvider):
                 tokens_used=data.get("usage", {}).get("total_tokens"),
             )
 
+    @retry(
+            stop= stop_after_attempt(3),
+            wait= wait_exponential(
+                multiplier= 1,
+                min = 2,
+                max = 10
+            )
+    )
     async def stream(self, prompt: Prompt) -> AsyncIterator[StreamChunk]:
         payload = {
             "model": self.config.model,
@@ -136,6 +144,14 @@ class OpenRouterProvider(AIProvider):
     def __init__ (self, config: AppConfig) -> None:
         self.config = config
 
+    @retry(
+            stop= stop_after_attempt(3),
+            wait= wait_exponential(
+                multiplier= 1,
+                min = 2,
+                max = 10
+            )
+    )
     async def ask(self, prompt: Prompt) -> ReviewResult:
         payload = {
             "model": self.config.model,
@@ -180,6 +196,14 @@ class OpenRouterProvider(AIProvider):
                 tokens_used=data.get("usage", {}).get("total_tokens"),
             )
 
+    @retry(
+            stop= stop_after_attempt(3),
+            wait= wait_exponential(
+                multiplier= 1,
+                min = 2,
+                max = 10
+            )
+    )
     async def stream(self, prompt: Prompt) -> AsyncIterator[StreamChunk]:
         payload = {
         "model": self.config.model,

@@ -59,9 +59,9 @@ Create `.roo/rules.md` in your project root:
 
 | Variable | Default | Description |
 |---|---|---|
-| `DEEPSEEK_API_KEY` | *(required)* | Your OpenRouter API key |
+| `DEEPSEEK_API_KEY` | *(required)* | Your DEEPSEEK API key |
 | `DEEPSEEK_MODEL` | `deepseek/deepseek-chat` | Model to use |
-| `DEEPSEEK_BASE_URL` | `https://openrouter.ai/api/v1` | API base URL |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` | API base URL |
 | `AI_MAX_TOKENS` | `4096` | Max tokens in response |
 
 ## Architecture

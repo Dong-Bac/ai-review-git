@@ -31,9 +31,22 @@ async def read_files_concurrently(file_paths: list[str], root: Path):
     return {path: content for path, content in valid_result if content is not None}
 
 def truncate_content(content: str, max_chars: int = 8_000) -> str:
+    """Truncate content at a line boundary to avoid breaking mid-line code.
+
+    Appends a clear truncation marker that is valid inside code blocks
+    (as a comment) so the AI doesn't receive malformed Markdown.
+    """
     if len(content) <= max_chars:
         return content
-    return content[:max_chars] + f"\n\n ..."
+
+    # Truncate at the nearest newline before max_chars to avoid
+    # cutting mid-line, which would break code block syntax.
+    truncated = content[:max_chars]
+    last_newline = truncated.rfind("\n")
+    if last_newline > max_chars * 0.7:  # Only use line boundary if reasonably close
+        truncated = truncated[:last_newline]
+
+    return truncated + "\n# ... [truncated for length] ..."
 
 
 async def resolve_project_name(root: Path) -> str:
