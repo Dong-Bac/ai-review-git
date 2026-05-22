@@ -19,9 +19,13 @@ def review(
         300, "--cache-ttl",
         help="Cache TTL in seconds (default: 300)",
     ),
+    persistent_cache: bool = typer.Option(
+        False, "--persistent-cache",
+        help="Use SQLite persistent cache (survives restarts)",
+    ),
 ) -> None:
     from src.commands.review import run_review
-    asyncio.run(run_review(no_cache=no_cache, cache_ttl=cache_ttl))
+    asyncio.run(run_review(no_cache=no_cache, cache_ttl=cache_ttl,persistent_cache=persistent_cache,))
 
 if __name__ == "__main__":
     app()

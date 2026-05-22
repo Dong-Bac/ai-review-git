@@ -11,3 +11,5 @@ build/
 *.log
 .mypy_cache/
 .ruff_cache/
+# .gitignore
+.ai-review-cache.db

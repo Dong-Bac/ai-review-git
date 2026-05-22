@@ -22,11 +22,11 @@ from src.types import ReviewContext, ReviewResult, ProjectInfo
 async def run_review(
     no_cache: bool = False,
     cache_ttl: int = 300,
+    persistent_cache: bool = False,
 ) -> None:
     root = Path.cwd()
-
     # ── 0. Initialise cache ──────────────────────────────────
-    cache = ReviewCache(ttl_seconds=cache_ttl)
+    cache = ReviewCache(ttl_seconds=cache_ttl, persistent=persistent_cache)
 
     # ── 1. Load config (fail fast) ───────────────────────────
     try:
