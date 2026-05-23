@@ -22,7 +22,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+AI_REVIEW_ROOT = Path(__file__).resolve().parent.parent.parent
+
 async def run_review(
+    use_env: bool = False,
     verbose: bool = False,
     no_cache: bool = False,
     cache_ttl: int = 300,
@@ -35,7 +38,10 @@ async def run_review(
 
     # ── 1. Load config (fail fast) ───────────────────────────
     try:
-        config = load_config()
+        if use_env:
+            config = load_config(env_path=AI_REVIEW_ROOT)
+        else:
+            config = load_config()
     except ValueError as exc:
         error("Configuration error", str(exc))
         raise SystemExit(1)

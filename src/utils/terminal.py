@@ -1,26 +1,33 @@
+import sys
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 from rich import print as rprint
 
+# Force UTF-8 encoding for stdout/stderr on Windows to handle Vietnamese/Unicode
+if sys.platform == "win32":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+
 console = Console()
 error_console = Console(stderr=True)
 
 
 def info(message: str) -> None:
-    console.print(f"[cyan]ℹ️  {message}[/cyan]")
+    console.print(f"[cyan]>> {message}[/cyan]")
 
 def success(message: str) -> None:
-    console.print(f"[green]✅ {message}[/green]")
+    console.print(f"[green]>> {message}[/green]")
 
 
 def warn(message: str) -> None:
-    console.print(f"[yellow]⚠️  {message}[/yellow]")
+    console.print(f"[yellow]>> {message}[/yellow]")
 
 
 def error(message: str, detail: str = "") -> None:
-    error_console.print(f"[red]❌ {message}[/red]")
+    error_console.print(f"[red]!! {message}[/red]")
     if detail:
         error_console.print(f"[dim]{detail}[/dim]")
 
@@ -31,7 +38,7 @@ def print_review(content: str, model: str) -> None:
     console.print(
         Panel(
             Markdown(content),
-            title=f"[bold blue]🤖 AI Code Review[/bold blue]",
+            title=f"[bold blue]AI Code Review[/bold blue]",
             subtitle=f"[dim]Model: {model}[/dim]",
             border_style="blue",
             padding=(1, 2),

@@ -5,8 +5,10 @@ from src.types import AppConfig
 import logging
 logger = logging.getLogger(__name__)
 
-def load_config() -> AppConfig:
-    load_dotenv(Path.cwd() / ".env")
+def load_config(env_path: Path | None = None) -> AppConfig:
+    
+    dotenv_file = (env_path / ".env") if env_path else (Path.cwd() / ".env")
+    load_dotenv(dotenv_file)
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
     if not api_key:
         raise ValueError(

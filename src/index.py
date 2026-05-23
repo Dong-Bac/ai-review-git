@@ -9,8 +9,12 @@ app = typer.Typer(
     pretty_exceptions_show_locals=False,
 )
 
-@app.command("review")
-def review(
+@app.callback(invoke_without_command=True)
+def main(
+    use_env: bool = typer.Option(
+        False, "--use_env",
+        help="Load .env from ai-review-py's own directory instead of the current project",
+    ),
     verbose: bool = typer.Option(
       False, "--verbose", "-v",
       help="Enable DEBUG-level logging"  
@@ -30,6 +34,7 @@ def review(
 ) -> None:
     from src.commands.review import run_review
     asyncio.run(run_review(
+        use_env = use_env,
         verbose = verbose, 
         no_cache=no_cache, 
         cache_ttl=cache_ttl,
@@ -37,6 +42,3 @@ def review(
 
 if __name__ == "__main__":
     app()
-
-
-
