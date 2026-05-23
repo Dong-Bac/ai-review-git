@@ -16,12 +16,39 @@ Mục tiêu của bạn là đưa ra phản hồi rõ ràng, có thể hành đ�
 
 {effective_rules}
 
+## Thang điểm Đánh giá (tổng: 10)
+
+Sau khi phân tích, bạn PHẢI chấm điểm tổng thể theo thang 10 với các tiêu chí sau:
+
+| Tiêu chí | Trọng số | Mô tả |
+|----------|----------|-------|
+| 🐛 Tính đúng đắn | 3.0 | Không có lỗi logic, bug, edge case không xử lý |
+| 🔒 Bảo mật | 2.0 | Không có lỗ hổng, exposed secrets, injection risks |
+| ⚡ Hiệu suất | 1.5 | Code hiệu quả, không lãng phí tài nguyên |
+| 🎨 Chất lượng mã | 2.0 | Dễ đọc, đặt tên tốt, cấu trúc hợp lý, best practices |
+| 📚 Khả năng bảo trì | 1.5 | Dễ mở rộng, testable, có documentation |
+
+**Cách tính:** Mỗi tiêu chí được chấm từ 0–10, sau đó nhân với trọng số.
+Tổng điểm = Σ(điểm_tiêu_chí × trọng_số) / 10
+
+## Phân loại Mức độ Nghiêm trọng
+
+Mỗi vấn đề tìm thấy PHẢI được gắn nhãn mức độ:
+- 🔴 **Critical** — Có thể gây crash, mất dữ liệu, lỗ hổng bảo mật
+- 🟠 **Major** — Logic sai, hiệu năng kém nghiêm trọng
+- 🟡 **Minor** — Vi phạm coding convention, code khó đọc
+- 🔵 **Info** — Gợi ý cải tiến, best practice
+
 ## Định dạng Đầu ra
 
 Cấu trúc phản hồi bằng các phần sau (sử dụng markdown headers):
 
+### 📊 Đánh giá Tổng quan
+Tóm tắt ngắn gọn về chất lượng chung của changeset.
+Kèm bảng điểm chi tiết theo rubric ở trên.
+
 ### 🐛 Lỗi & Vấn đề
-Liệt kê các lỗi, lỗi logic hoặc hành vi sai.
+Liệt kê các lỗi, lỗi logic hoặc hành vi sai, kèm mức độ nghiêm trọng.
 
 ### 🔒 Bảo mật
 Nêu bật các lỗ hổng bảo mật hoặc pattern rủi ro.
@@ -35,11 +62,17 @@ Nhận xét về khả năng đọc, đặt tên, cấu trúc và best practices
 ### ✅ Điểm Tốt
 Ghi nhận những gì đã làm tốt.
 
-### 💡 Gợi ý
+### 💡 Gợi ý Cải tiến
 Các cải tiến có thể hành động mà developer nên cân nhắc.
 
-Giữ đánh giá ngắn gọn. Tập trung vào các vấn đề quan trọng nhất.
-Sử dụng ví dụ mã khi minh họa cách sửa lỗi.
+## Quy tắc quan trọng
+
+1. **Luôn đưa ra điểm số cụ thể** — Không đánh giá chung chung
+2. **Mỗi vấn đề phải có mức độ nghiêm trọng** — Dùng emoji 🔴🟠🟡🔵
+3. **Mỗi vấn đề phải kèm file & dòng code** — `path/to/file.py:42`
+4. **Ưu tiên các vấn đề Critical/Major** — Không sa đà vào chi tiết vụn vặt
+5. **Sử dụng ví dụ mã khi minh họa cách sửa lỗi**
+6. **Giữ giọng văn xây dựng, không chỉ trích**
 
 **QUAN TRỌNG: Trả lời HOÀN TOÀN bằng tiếng Việt.**"""
 
@@ -91,6 +124,30 @@ def _build_file_contents_section(ctx: ReviewContext) -> str:
     return "## File Contents\n\n" + "\n\n".join(blocks)
 
 
+def _build_review_instructions(ctx: ReviewContext) -> str:
+    """Build the review instructions section with scoring requirements."""
+    statuses = {f.status for f in ctx.changed_files}
+    return f"""## Yêu cầu Đánh giá
+
+Vui lòng đánh giá changeset này theo các yêu cầu sau:
+
+1. **Chấm điểm tổng thể** trên thang 10 (theo rubric đã nêu trong system prompt)
+2. **Liệt kê tất cả vấn đề** tìm thấy, kèm:
+   - Mức độ nghiêm trọng (🔴 Critical / 🟠 Major / 🟡 Minor / 🔵 Info)
+   - Đường dẫn file & số dòng chính xác
+   - Giải thích ngắn gọn tại sao đây là vấn đề
+   - Đề xuất cách khắc phục (kèm code mẫu nếu cần)
+3. **Đưa ra bảng điểm chi tiết** cho từng tiêu chí
+
+### Ngữ cảnh bổ sung
+- **Project:** {ctx.project_info.name}
+- **Branch:** {ctx.branch}
+- **Số file thay đổi:** {len(ctx.changed_files)}
+- **Loại thay đổi:** {', '.join(sorted(statuses))}
+
+Hãy đánh giá dựa trên mức độ ảnh hưởng của changeset này đến toàn bộ dự án."""
+
+
 def _build_user_prompt(ctx: ReviewContext) -> str:
     sections = [
         _build_project_context(ctx),
@@ -98,8 +155,7 @@ def _build_user_prompt(ctx: ReviewContext) -> str:
         _build_changed_files_section(ctx),
         _build_diff_section(ctx.diff),
         _build_file_contents_section(ctx),
-        "---",
-        "Please review the above changes and provide structured feedback.",
+        _build_review_instructions(ctx),
     ]
     return "\n\n".join(s for s in sections if s)
 

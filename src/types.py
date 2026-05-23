@@ -47,10 +47,32 @@ class Prompt:
 
 
 @dataclass
+class ReviewScore:
+    """Scoring breakdown for a code review (0-10 scale per criterion)."""
+    correctness: float      # Weight: 3.0
+    security: float         # Weight: 2.0
+    performance: float      # Weight: 1.5
+    quality: float          # Weight: 2.0
+    maintainability: float  # Weight: 1.5
+
+    @property
+    def total(self) -> float:
+        """Calculate weighted total score out of 10."""
+        return (
+            self.correctness * 3.0
+            + self.security * 2.0
+            + self.performance * 1.5
+            + self.quality * 2.0
+            + self.maintainability * 1.5
+        ) / 10.0
+
+
+@dataclass
 class ReviewResult:
     content: str
     model: str
     tokens_used: Optional[int] = None
+    score: Optional[ReviewScore] = None  # Parsed from AI response (optional)
 
 
 @dataclass

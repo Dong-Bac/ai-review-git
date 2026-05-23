@@ -21,6 +21,6 @@ def load_config(env_path: Path | None = None) -> AppConfig:
         base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip(),
         app_name=os.getenv("APP_NAME", "ai-review").strip(),
         app_url=os.getenv("APP_URL", "https://github.com/ai-review/ai-review").strip(),
-        max_tokens=int(os.getenv("AI_MAX_TOKENS", "4096")),
+        max_tokens=int(os.getenv("AI_MAX_TOKENS", "8192")),
         provider=os.getenv("PROVIDER", "deepseek").strip().lower(),
     )
