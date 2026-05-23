@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from typing import Optional
 from src.types import ReviewResult
 from src.cache_backend import MemoryCache, SQLiteCache
-
+import logging
+logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     result : ReviewResult

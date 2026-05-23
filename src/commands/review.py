@@ -17,13 +17,18 @@ from src.rules import load_rules
 from src.utils.files import read_files_concurrently, resolve_project_name
 from src.utils.terminal import stream_review, success, warn, error, print_review
 from src.types import ReviewContext, ReviewResult, ProjectInfo
+from src.utils.logger import setup_logging
+import logging
 
+logger = logging.getLogger(__name__)
 
 async def run_review(
+    verbose: bool = False,
     no_cache: bool = False,
     cache_ttl: int = 300,
     persistent_cache: bool = False,
 ) -> None:
+    setup_logging(verbose = verbose)
     root = Path.cwd()
     # ── 0. Initialise cache ──────────────────────────────────
     cache = ReviewCache(ttl_seconds=cache_ttl, persistent=persistent_cache)

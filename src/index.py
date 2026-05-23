@@ -11,6 +11,10 @@ app = typer.Typer(
 
 @app.command("review")
 def review(
+    verbose: bool = typer.Option(
+      False, "--verbose", "-v",
+      help="Enable DEBUG-level logging"  
+    ),
     no_cache: bool = typer.Option(
         False, "--no-cache",
         help="Bypass cache and force a fresh AI call",
@@ -25,7 +29,11 @@ def review(
     ),
 ) -> None:
     from src.commands.review import run_review
-    asyncio.run(run_review(no_cache=no_cache, cache_ttl=cache_ttl,persistent_cache=persistent_cache,))
+    asyncio.run(run_review(
+        verbose = verbose, 
+        no_cache=no_cache, 
+        cache_ttl=cache_ttl,
+        persistent_cache=persistent_cache,))
 
 if __name__ == "__main__":
     app()

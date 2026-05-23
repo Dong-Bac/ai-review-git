@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from src.types import AppConfig
+import logging
+logger = logging.getLogger(__name__)
 
 def load_config() -> AppConfig:
     load_dotenv(Path.cwd() / ".env")

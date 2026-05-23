@@ -8,7 +8,8 @@ from abc import ABC, abstractmethod
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import AsyncIterator
 import httpx
-
+import logging
+logger = logging.getLogger(__name__)
 
 from src.types import AppConfig, Prompt, ReviewResult, StreamChunk
 

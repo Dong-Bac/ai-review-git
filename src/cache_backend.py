@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Optional
 
 from src.types import ReviewResult
-
+import logging
+logger = logging.getLogger(__name__)
 
 #-------Abstract interface---------------
 

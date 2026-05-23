@@ -10,7 +10,8 @@ import git
 from git import InvalidGitRepositoryError, Repo
 
 from src.types import ChangedFile, FileStatus, GitDiffInfo
-
+import logging
+logger = logging.getLogger(__name__)
 
 def _status_to_enum(status_char: str) -> FileStatus:
     mapping: dict[str, FileStatus] = {
