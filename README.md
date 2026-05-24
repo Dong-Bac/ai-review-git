@@ -20,9 +20,18 @@ cd ai-review-py
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 
-# Install
+# Lightweight install (recommended) — only essential dependencies
 pip install -e .
+
+# Full install with vector memory support (~200MB additional)
+# Required for --memory flag (similar past review retrieval)
+pip install -e ".[memory]"
 ```
+
+> **Note:** The base install is lightweight (~10MB). The `[memory]` extra adds
+> `chromadb` and `sentence-transformers` which pull in heavy packages like
+> `torch` (~123MB), `scipy`, `onnxruntime`, etc. Only install if you need
+> vector memory features.
 
 ## Setup
 

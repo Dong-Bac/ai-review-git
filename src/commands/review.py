@@ -18,6 +18,7 @@ from src.utils.files import read_files_concurrently, resolve_project_name
 from src.utils.terminal import stream_review, success, warn, error, print_review
 from src.types import ReviewContext, ReviewResult, ProjectInfo
 from src.utils.logger import setup_logging
+from src.memory import get_memory_store, embed_diff, MemoryQuery
 import logging
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ async def run_review(
     no_cache: bool = False,
     cache_ttl: int = 300,
     persistent_cache: bool = False,
+    no_memory: bool = False,
 ) -> None:
     setup_logging(verbose = verbose)
     root = Path.cwd()
@@ -113,7 +115,32 @@ async def run_review(
             rules=rules,
             project_info=ProjectInfo(name=project_name, root_path=str(root.resolve())),
         )
-        prompt = build_prompt(context)
+
+        # ── 6b. Vector memory: retrieve similar past reviews ──
+        memory_results = None
+        if config.memory.enabled and not no_memory:
+            try:
+                store = get_memory_store(
+                    db_path=config.memory.db_path,
+                    project=project_name,
+                )
+                if store is not None:
+                    diff_embedding = embed_diff(git_info.diff)
+                    file_paths = [f.path for f in changed_files]
+                    memory_results = store.query_similar(
+                        MemoryQuery(
+                            diff_embedding=diff_embedding,
+                            files=file_paths,
+                            branch=git_info.branch,
+                            top_k=config.memory.top_k,
+                        )
+                    )
+                    if memory_results:
+                        success(f"Found {len(memory_results)} similar past review(s).")
+            except Exception as exc:
+                logger.warning("Vector memory retrieval failed: %s", exc)
+
+        prompt = build_prompt(context, memory_results=memory_results)
 
         # ── 7. Check cache (unless --no-cache) ───────────────
         cache_key = ReviewCache.make_key(git_info.diff)
@@ -146,6 +173,29 @@ async def run_review(
     # ── 9. Store result in cache ─────────────────────────────
     result = ReviewResult(content=full_content, model=config.model)
     cache.set(cache_key, result)
+
+    # ── 9b. Save to vector memory for future retrieval ──────
+    if config.memory.enabled and not no_memory and memory_results is not None:
+        try:
+            store = get_memory_store(
+                db_path=config.memory.db_path,
+                project=project_name,
+            )
+            if store is not None:
+                from src.memory.models import ReviewRecord
+                diff_embedding = embed_diff(git_info.diff)
+                file_paths = [f.path for f in changed_files]
+                record = ReviewRecord.from_review_result(
+                    result=result,
+                    diff_hash=cache_key,
+                    branch=git_info.branch,
+                    project=project_name,
+                    files=file_paths,
+                    embedding=diff_embedding,
+                )
+                store.add_review(record)
+        except Exception as exc:
+            logger.warning("Failed to save review to vector memory: %s", exc)
 
     success("Review completed")
 

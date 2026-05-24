@@ -76,6 +76,14 @@ class ReviewResult:
 
 
 @dataclass
+class MemoryConfig:
+    """Configuration for vector memory (review history)."""
+    enabled: bool = True
+    top_k: int = 3
+    db_path: str = ".roo/memory/vector_db"
+
+
+@dataclass
 class AppConfig:
     api_key: str
     model: str
@@ -84,6 +92,8 @@ class AppConfig:
     app_url: str
     max_tokens: int
     provider: str = field(default="deepseek")
+    memory: MemoryConfig = field(default_factory=MemoryConfig)
+    embedding_model: str = "all-MiniLM-L6-v2"
 
 @dataclass
 class StreamChunk:

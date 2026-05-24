@@ -17,7 +17,7 @@ def main(
     ),
     verbose: bool = typer.Option(
       False, "--verbose", "-v",
-      help="Enable DEBUG-level logging"  
+      help="Enable DEBUG-level logging"
     ),
     no_cache: bool = typer.Option(
         False, "--no-cache",
@@ -31,14 +31,19 @@ def main(
         False, "--persistent-cache",
         help="Use SQLite persistent cache (survives restarts)",
     ),
+    no_memory: bool = typer.Option(
+        False, "--no-memory",
+        help="Disable vector memory (skip similar review retrieval)",
+    ),
 ) -> None:
     from src.commands.review import run_review
     asyncio.run(run_review(
         use_env = use_env,
-        verbose = verbose, 
-        no_cache=no_cache, 
+        verbose = verbose,
+        no_cache=no_cache,
         cache_ttl=cache_ttl,
-        persistent_cache=persistent_cache,))
+        persistent_cache=persistent_cache,
+        no_memory=no_memory,))
 
 if __name__ == "__main__":
     app()

@@ -1,7 +1,10 @@
 from __future__ import annotations
+from typing import Optional
+
 from src.types import Prompt, ReviewContext
 from src.rules import get_default_rules
 from src.utils.files import truncate_content
+from src.memory.models import MemoryResult
 
 
 # ── System prompt ────────────────────────────────────────────
@@ -148,13 +151,48 @@ Vui lòng đánh giá changeset này theo các yêu cầu sau:
 Hãy đánh giá dựa trên mức độ ảnh hưởng của changeset này đến toàn bộ dự án."""
 
 
-def _build_user_prompt(ctx: ReviewContext) -> str:
+def _build_memory_context(memory_results: list[MemoryResult]) -> str:
+    """Build a markdown section from similar past reviews.
+
+    This section is injected into the user prompt to give the AI
+    context about how similar changesets were reviewed before.
+    Token budget: ~800 tokens max.
+    """
+    if not memory_results:
+        return ""
+
+    lines = [
+        "## 📜 Similar Past Reviews",
+        "",
+        "The following reviews of similar changesets were found in project history.",
+        "Use them as reference for consistency, but evaluate the current changeset independently.",
+        "",
+    ]
+
+    for i, mr in enumerate(memory_results, 1):
+        rec = mr.record
+        lines.append(f"### Past Review #{i} (similarity: {mr.similarity:.0%})")
+        lines.append("")
+        lines.append(f"- **Branch:** {rec.branch or 'unknown'}")
+        lines.append(f"- **Files:** {', '.join(rec.files[:5])}{'…' if len(rec.files) > 5 else ''}")
+        lines.append(f"- **Issues found:** {rec.issues_count} (🔴 {rec.critical_count} critical, 🟠 {rec.major_count} major)")
+        if rec.score_total is not None:
+            lines.append(f"- **Score:** {rec.score_total:.1f}/10")
+        if rec.summary:
+            lines.append(f"- **Summary:** {rec.summary[:300]}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _build_user_prompt(ctx: ReviewContext, memory_results: Optional[list[MemoryResult]] = None) -> str:
     sections = [
         _build_project_context(ctx),
         _build_commit_context(ctx),
         _build_changed_files_section(ctx),
         _build_diff_section(ctx.diff),
         _build_file_contents_section(ctx),
+        _build_memory_context(memory_results or []),
         _build_review_instructions(ctx),
     ]
     return "\n\n".join(s for s in sections if s)
@@ -162,9 +200,9 @@ def _build_user_prompt(ctx: ReviewContext) -> str:
 
 # ── Public entry point ────────────────────────────────────────
 
-def build_prompt(ctx: ReviewContext) -> Prompt:
+def build_prompt(ctx: ReviewContext, memory_results: Optional[list[MemoryResult]] = None) -> Prompt:
     """Assemble the complete Prompt ready for the AI provider."""
     return Prompt(
         system=_build_system_prompt(ctx.rules),
-        user=_build_user_prompt(ctx),
+        user=_build_user_prompt(ctx, memory_results=memory_results),
     )
