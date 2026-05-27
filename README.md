@@ -2,6 +2,11 @@
 
 > AI-powered code review CLI for your git staged changes.
 
+[![CI](https://github.com/your-org/ai-review/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-review/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ai-review)](https://pypi.org/project/ai-review/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/ai-review)](https://pypi.org/project/ai-review/)
+[![License](https://img.shields.io/github/license/your-org/ai-review)](LICENSE)
+
 ## Features
 
 - 🔍 Reads staged git diff automatically

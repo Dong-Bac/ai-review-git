@@ -22,6 +22,12 @@ memory = [
     "chromadb>=0.5.0",                  # vector database for memory
     "sentence-transformers>=2.7.0",     # local embedding model
 ]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.27.0",                    # for test client mocking
+]
 
 [project.scripts]
 ai-review = "src.index:app"
@@ -30,6 +36,10 @@ ai-review = "src.index:app"
 where = ["."]
 include = ["src*"]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
 [tool.mypy]
 strict = true
 python_version = "3.11"
@@ -37,3 +47,16 @@ python_version = "3.11"
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise SystemExit",
+    "raise NotImplementedError",
+]

@@ -197,6 +197,6 @@ async def run_review(
         except Exception as exc:
             logger.warning("Failed to save review to vector memory: %s", exc)
 
-    success("Review completed")
-
     # ── 10. Print result ─────────────────────────────────────
+    print_review(full_content, config.model)
+    success("Review completed")

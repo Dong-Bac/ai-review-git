@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+import atexit
 import hashlib
 import time
 from abc import ABC, abstractmethod
@@ -96,6 +97,9 @@ class SQLiteCache(CacheBackend):
         )
         self._conn.commit()
 
+        # Register cleanup on interpreter exit to prevent connection leak
+        atexit.register(self.close)
+
     def get(self, key: str) -> Optional[ReviewResult]:
         import sqlite3
         try:
@@ -153,6 +157,18 @@ class SQLiteCache(CacheBackend):
 
     def close(self) -> None:
         """Đóng kết nối SQLite (gọi khi app kết thúc)."""
-        self._conn.close()
-        
+        try:
+            self._conn.close()
+        except Exception:
+            pass
+
+    def __del__(self) -> None:
+        """Destructor — đảm bảo connection được đóng."""
+        self.close()
+
+    def __enter__(self) -> SQLiteCache:
+        return self
+
+    def __exit__(self, *args) -> None:
+        self.close()
         
